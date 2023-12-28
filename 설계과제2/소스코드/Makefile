@@ -184,8 +184,8 @@ UPROGS=\
 	_datetest\
 	_alarm_test\
 
-fs.img: mkfs README README2 $(UPROGS)
-	./mkfs fs.img README README2 $(UPROGS)
+fs.img: mkfs README $(UPROGS)
+	./mkfs fs.img README $(UPROGS)
 
 -include *.d
 
