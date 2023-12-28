@@ -1,0 +1,101 @@
+주의 사항 
+priority / proc_tick 프로세스 구조체 내 변수 추가 및 
+allocproc 함수에서 해당 변수 초기화 
+
+
+
+
+xv6 스케쥴러 분석
+
+- proc.h 
+OS 상태에 관한 열거형 변수 state  
+enum proc state {UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE} ; 
+
+UNUSED : 프로세스 생성 직후 proc 구조체내 변수들이 초기화 되지 않은 상태
+proc.c 내 static struct proc* allocproc(void);  에서 UNUSED 프로세스를 확인 한후  프로세스를 사용하기 위한 값들을 초기화 후 EMBRYO 상태로 변환한다.
+
+EMBRYO :  프로세스를 사용하기 위한 값들을 초기화 한 상태 이 상태에서 스케쥴링 되거나 실행되지 않는다.
+
+SLEEPING : I/O 와 같은 이벤트로 인해 대기중인 상태.
+
+RUNNABLE : 스케쥴러에게 선택을 받아 실행 가능한 상태 CPU를 할당 받을 준비가 되어있고, 스케쥴러에 의해 CPU 할당 받을수 있다.
+
+RUNNING : 현재 CPU 사용 중인 프로세스
+
+ZOMBIE : 프로세스가 종료 된 상태.
+
+struct cpu { ... }; // CPU에 대한 구조체 
+struct context { ... }; // 문맥에 대한 구조체 
+struct proc { ... }; // 프로세스에 대한 구조체
+
+
+
+- proc.c 
+struct {
+ struct spinlock lock; // 다중 스레딩 에서 안전하게 접근 가능 acquire() 함수 와 release() 함수를 통해 일반적으로 제어
+ struct proc proc[NPROC]; // 프로세스의 구조체 배열, 프로세스 테이블로 사용된다. 
+} ptable; 
+// param.h(xv6내 여러 상수에 대한 정의) 내 NPROC 최대 프로세스의 수를 64로 정의되어있다.
+
+static struct proc* allocproc(void); 
+해당 함수를 통해 process table 내 UNUSED 상태의 process를 EMBRYO 상태로 전환시킨다.
+이번 과제에서 새로운 스케쥴러를 위해 추가하는 변수들을 allocproc() 에서 초기화 해줘야한다.
+
+가장 중요한 proc.c 내부 scheduler() 함수에 대해 분석
+
+
+
+
+
+
+1. 기존 XV6 스케쥴러 분석 한다.
+kernel main.c 내 main() -> mpmain() -> scheduler() 호출 무한루프를 통해  RUNNABLE 프로세스를 찾아 나간다.
+
+Runnable한 프로세스를 찾으면 p->state == RUNNABLE
+현재 struct cpu 의 proc 멤버를 해당 RUNNABLE 프로세스의 포인터로 대체하고,  c->proc = p;
+scheduler 멤버를 old context로 swtch 함수를 호출한다. swth(&(c->scheduler), p->context);
+
+
+
+
+proc.c 내부 scheduler() 함수 : 프로세스 테이블의 RUNNABLE 프로세스를 찾아 다음번에 실행될수있게 한다.
+
+trap.c trap() 함수내에 if(myproc() && myproc()->state == RUNNING && tf-> trapno == T_IRQ0 + IRQ_TIMER)
+	yield(); // clock tick에 도달했을때 CPU를 포기하고 스케쥴 될 수 있도록 한다.
+
+proc.c 내부 yield() 함수  : 타이머 인터럽트 때, RUNNING 중인 프로세스를 RUNNABLE 상태로 변경하고 sched() 함수를 호출한다.
+                  sched() 함수 : 가장 중요한 부분은 인터럽트 가능여부를 intena 변수에 저장하고 문맥교환이후 다시 복원시켜주고 
+                                        그 사이 swtch() 함수를 호출하여서 문맥교환을 수행합니다.
+
+swtch.S 내부 void swtch(struct context **old, struct context *new); 
+                    문맥교환하는 함수 
+
+
+2. 
+CPU 사용량에 따른 priority 가진다. 
+priority 값이 낮을 수록 priority가 높은 프로세스 
+priority가 높은 프로세스 우선 수행 -> starvation 나타날 수 있다.
+time quantum 30tick.
+
+스케쥴러는 run queue를 가지고.
+
+각 run queue는 우선순위 4개를 포함하고 있다.
+
+
+schedule() -> 0~3 priority 가지는 run queue 가리키기 -> 4~7 priroirty 가지는 run queue 가리키기 
+
+new_priority = old_priority + (proc_tick / 10); 
+
+-> proc.h proc 구조체 내에 proc_tick 변수 추가 필요하다.
+
+처음 커널 실행 mpmain() -> scheduler() 호출 / 다른 프로세스 돌리다가 
+
+
+-------------------------------------------------------------------------------------
+런 큐 구현에 대한 고민
+런 큐는 프로세스 링크드리스트를 갖는 포인터 배열 입니다.
+해당 
+
+-------------------------------------------------------------------------------------
+
+
