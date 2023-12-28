@@ -1,0 +1,21 @@
+1.user.h : 시스템 호출 정의 추가
+2.usys.S SYSCALL(date) 추가
+3.syscall.h //systeam call numbers 에 SYS_date 추가
+4.syscall.c [SYS_date] sys_date 추가 및 extern int sys_date(void); 추가
+5.sysproc.c int sys_date(void) 추가
+
+6.datetest.c 구현
+7.alarm_test.c 구현
+
+8.Makefile 수정
+
+9.proc.h 수정 -> proc 구조체 내부 변수 추가 
+10.trap.c trap() 수정 
+11. proc.c 수정 -> proc 구조체 내부 변수 초기화
+
+제출 파일 11개
+
+proc.h 내부 alarmticks, alarm_timer 선언
+// alarm_timer에 alarmticks가 도달하면 프로세스 타이머 인터럽트
+
+trap.c 내부 trap(struct trapframe *tf); 수정 // 타이머 인터럽트 사용을 위하여서

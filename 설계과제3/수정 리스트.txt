@@ -1,0 +1,23 @@
+1.syscall.c - > 시스템 콜 추가 부분
+2.syscall.h -> 시스템 콜 추가 부분
+3.sysproc.c -> 시스템 콜 추가 부분
+4.usys.S -> 시스템 콜 추가 부분
+5.user.h -> 시스템 콜 유저 프로그램에서 사용할수 있도록 정의
+6.defs.h -> proc.c에 선언한 set_sche_info(),calculate_new_priority() 함수 프로토타입 정의
+7.trap.c -> 타이머 인터럽트 30tick 및, 타이머 인터럽트 부분 수정, 60tick 마다 우선순위 재 계산 proc.c 함수 사용
+8.proc.c 
+9.proc.h -> 프로세스 구조체 수정
+10.node.h 
+11.node.c -> node와 큐에 대한 구조체 및 함수 구현
+12.scheduler_test.c -> set_sche_info() 시스템 콜 호출 및 스케쥴러 테스트 유저 프로그램
+13.Makefile -> CPU 코어 1개 / 
+
+
+
+
+proc.c내 
+allocproc()
+exit() -> 종료 프로세스
+set_sche_info()
+calculate_new_priority()
+scheduler() 
